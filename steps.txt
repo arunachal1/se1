@@ -34,5 +34,10 @@ cat ~/watcher.log  # Should now show activity
 
 ps aux | grep git_watcher.sh
 
+pkg install -y less
+export PAGER=less  # Add to ~/.bashrc for persistence
+
 cd ~/se1 && git log --oneline
+
+inotifywait -r -e modify .
 
