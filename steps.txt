@@ -1,0 +1,38 @@
+pkg update && pkg install -y git gh
+gh auth login
+mkdir ~/my-project && cd ~/my-project  
+git init
+
+echo "# My Project" > README.md  
+git add README.md  
+git commit -m "Initial commit"  
+
+gh repo create my-project --public --push --source=.  
+
+git log --oneline  # Check commit  
+gh repo view --web  # Open in browser  
+
+pkg install -y inotify-tools  
+
+
+cat > ~/git_watcher.sh <<'EOF'
+#!/data/data/com.termux/files/usr/bin/bash
+while inotifywait -e modify ~/se1; do
+  cd ~/se1 && \
+  git add . && \
+  git commit -m "Auto-commit $(date)" && \
+  git push
+done
+EOF
+
+chmod +x ~/git_watcher.sh
+nohup bash ~/git_watcher.sh > ~/watcher.log 2>&1 &
+tail -f ~/watcher.log
+
+echo "Test" >> ~/se1/README.md
+cat ~/watcher.log  # Should now show activity
+
+ps aux | grep git_watcher.sh
+
+cd ~/se1 && git log --oneline
+
