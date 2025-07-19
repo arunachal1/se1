@@ -41,3 +41,20 @@ cd ~/se1 && git log --oneline
 
 inotifywait -r -e modify .
 
+------
+
+gh repo fork httpie/httpie --clone --depth=1  
+cd httpie
+
+nano httpie/cli/usage.py  # Edit help text/docstring  
+
+git checkout -b fix-typo  
+git add . && git commit -m "DOC: Fix CLI help typo"  
+gh pr create --title "Fix typo" --body "Trivial CLI doc fix"  
+
+
+
+
+
+
+
