@@ -183,7 +183,7 @@ pip install snakeviz
 snakeviz stats.prof  
 
 # Reduce complexity for profiling  
-python -m cProfile -o simple.prof -s cumtime slow.py  
+python3 -m cProfile -o simple.prof -s cumtime slow.py  
 
 ---
 
@@ -240,5 +240,10 @@ if __name__ == "__main__":
 cd /data/data/com.termux/files/home/codes/pipeline_error_handler/ && python3 fetch_crypto.py && git add crypto.json && git commit -m "Test crypto data" && git push
 
 (crontab -l ; echo "*/5 * * * * cd /data/data/com.termux/files/home/codes/pipeline_error_handler && python fetch_crypto.py >> ~/cron.log 2>&1 && git add -A && git commit -m 'Auto-update: \$(date) ' && git push >> ~/cron.log 2>&1") | crontab -
+
+
+git add .github/workflows/test_workflow.yml  
+git commit -m "Add GitHub Actions"  
+git push
 
 
