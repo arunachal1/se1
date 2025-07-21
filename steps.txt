@@ -52,9 +52,193 @@ git checkout -b fix-typo
 git add . && git commit -m "DOC: Fix CLI help typo"  
 gh pr create --title "Fix typo" --body "Trivial CLI doc fix"  
 
+----
+
+cron pipeline job
+
+data_pipeline.py
+
+import requests, pandas as pd  
+url = "https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&hourly=temperature_2m"  
+data = requests.get(url).json()  
+df = pd.DataFrame(data["hourly"])  
+df.to_csv("weather.csv", index=False)  
 
 
+python data_pipeline.py  
+git add weather.csv && git commit -m "Update data $(date)"  
+git push  
+
+Automate
+
+crontab -e  
+
+0 * * * * cd /data/data/com.termux/files/home/codes/test-pipeline && \
+python3 /data/data/com.termux/files/home/codes/test-pipeline/data_pipeline.py >> ~/cron.log 2>&1 && \
+git add -A && git commit -m "Auto: \$(date)" >> ~/cron.log 2>&1 && \
+git push >> ~/cron.log 2>&1
+
+ls -l /data/data/com.termux/files/home/codes/test-pipeline/data_pipeline.py
+touch ~/cron.log  
+crontab -l  # Check your job is listed  
+
+cd ~/codes/test-pipeline && python3 data_pipeline.py && git add -A && git commit -m "Test" && git push  
+
+crond status  
+pkg install termux-services -y  
+sv-enable crond  
+
+logcat -s CRON  # Android-level cron logs  
+
+test directly
+
+cd /data/data/com.termux/files/home/codes/test-pipeline && \
+python3 data_pipeline.py >> ~/cron.log 2>&1 && \
+git add -A && git commit -m "Test" && git push
+
+tail -n 20 ~/cron.log
+
+----
+
+build pypi package
+
+mkdir ~/file-renamer && cd ~/file-renamer  
+
+renamer.py
+
+#!/usr/bin/env python3  
+import argparse  
+
+def rename_files(prefix):  
+    import os  
+    for i, f in enumerate(os.listdir()):  
+        os.rename(f, f"{prefix}_{i}{os.path.splitext(f)[1]}")  
+
+if __name__ == "__main__":  
+    parser = argparse.ArgumentParser(description="Rename files with a prefix.")  
+    parser.add_argument("--prefix", required=True, help="Prefix for filenames")  
+    args = parser.parse_args()  
+    rename_files(args.prefix)  
+
+chmod +x renamer.py  
+
+touch test1.txt test2.jpg  # Create dummy files  
+./renamer.py --prefix "demo"  
+ls  # Should show demo_0.txt, demo_1.jpg  
+
+setup.py
+
+from setuptools import setup  
+
+setup(  
+    name="file-renamer",  
+    version="0.1",  
+    scripts=["renamer.py"],  
+)  
 
 
+pip install twine  
+python3 setup.py sdist  
+twine upload dist/*  
+
+pip install file-renamer  # Use your package name  
+
+renamer.py --prefix "new_"  # Executable name from `scripts` in setup.py  
+
+
+PyPI recovery codes
+219ab1f72780153c
+9628058f8ed1ab87
+1f21ac92263e5756
+f07e88c2fe2e7d25
+c3a058885e5cbd54
+5167ea2ea183ea4e
+0caa51a17884e85e
+261a3ae9610ea73e
+
+upgrade package
+
+modify renamer.py
+
+rm -rf dist/  
+python setup.py sdist  
+twine upload dist/*  
+
+pip install --upgrade your-package-name  
+
+http://127.0.0.1:8080/snakeviz/%2Fdata%2Fdata%2Fcom.termux%2Ffiles%2Fhome%2Fcodes%2Fcode_performance_analyser%2Fsimple.prof
+
+
+---
+
+performance profiling
+
+slow.py
+
+def slow():  
+    return sum(i*i for i in range(10**6))  
+
+python -m cProfile -o stats.prof slow.py  
+pip install snakeviz  
+snakeviz stats.prof  
+
+# Reduce complexity for profiling  
+python -m cProfile -o simple.prof -s cumtime slow.py  
+
+---
+
+error handling in data pipeline
+
+fetch_stocks.py
+
+import requests, time, logging  
+
+logging.basicConfig(filename='pipeline.log', level=logging.ERROR)  
+
+def fetch_data(url, retries=3):  
+    for _ in range(retries):  
+        try:  
+            data = requests.get(url, timeout=5).json()  
+            return data  
+        except Exception as e:  
+            logging.error(f"Attempt {_+1}: {e}")  
+            time.sleep(2)  
+    return None  
+
+if __name__ == "__main__":  
+    data = fetch_data("https://api.twelvedata.com/stocks")  # Free API  
+    if data:  
+        with open("stocks.json", "w") as f:  
+            f.write(str(data))  
+
+git init && echo "Handles pipeline errors" > README.md && git add README.md && git commit -m "Initial commit" && gh repo create pipeline_error_handler --public --push --source=.
+
+python3 fetch_stocks.py && git add -A && git commit -m "Test" && git push
+
+# with smaller, crypto data
+
+fetch_crypto.py
+
+# fetch_stocks.py (updated)
+import requests, logging
+
+logging.basicConfig(filename='pipeline.log', level=logging.INFO)
+URL = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&per_page=10"  # 10 coins (~2KB)
+
+def fetch_data():
+    try:
+        data = requests.get(URL, timeout=5).json()
+        with open("crypto.json", "w") as f:
+            f.write(str(data))
+        logging.info("Data fetched")
+    except Exception as e:
+        logging.error(f"Failed: {e}")
+
+if __name__ == "__main__":
+    fetch_data()
+
+cd /data/data/com.termux/files/home/codes/pipeline_error_handler/ && python3 fetch_crypto.py && git add crypto.json && git commit -m "Test crypto data" && git push
+
+(crontab -l ; echo "*/5 * * * * cd /data/data/com.termux/files/home/codes/pipeline_error_handler && python fetch_crypto.py >> ~/cron.log 2>&1 && git add -A && git commit -m 'Auto-update: \$(date) ' && git push >> ~/cron.log 2>&1") | crontab -
 
 
